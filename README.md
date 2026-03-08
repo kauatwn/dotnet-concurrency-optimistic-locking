@@ -22,13 +22,13 @@ Ensure you have the following installed to run this project efficiently:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/kauatwn/TicketFlow.git
+git clone https://github.com/kauatwn/dotnet-concurrency-optimistic-locking.git
 ```
 
 ### 2. Enter the Directory
 
 ```bash
-cd TicketFlow
+cd dotnet-concurrency-optimistic-locking
 ```
 
 ### 3. Run with Docker
@@ -54,9 +54,9 @@ dotnet test
 The solution follows the **Clean Architecture** principles to ensure separation of concerns and testability, with a dedicated split between Unit and Integration testing.
 
 ```plaintext
-TicketFlow/
+dotnet-concurrency-optimistic-locking/
 ├── src/
-│   ├── TicketFlow.Api/               # Entry point, Controllers, Global Exception Handling
+│   ├── TicketFlow.API/               # Entry point, Controllers, Global Exception Handling
 │   ├── TicketFlow.Application/       # Use Cases (MediatR), Behaviors, DTOs
 │   ├── TicketFlow.Domain/            # Aggregate Roots, Value Objects, Pure Logic
 │   └── TicketFlow.Infrastructure/    # EF Core, Concurrency Handling, TimeProvider
