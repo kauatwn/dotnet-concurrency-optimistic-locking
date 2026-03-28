@@ -99,6 +99,9 @@ To prevent "double booking" without killing performance, we made specific engine
 > - **Why not Pessimistic Locking?** Keeping database rows locked (`SELECT FOR UPDATE`) while the user "thinks" or pays would degrade performance and throughput significantly.
 > - **How it works:** If two users read the same ticket version, the first one to write wins. The second one triggers a `DbUpdateConcurrencyException`, which we catch in the `UnitOfWork` and translate to a **409 Conflict** response.
 
+![Sequence Diagram illustrating Optimistic Locking in action](./docs/optimistic-locking-sequence.png)
+_Figure 1: Sequence diagram demonstrating the race condition handling and the 409 Conflict response._
+
 ### 4. Comprehensive Testing Strategy
 
 The project adopts a strategy focused on **Time** and **Parallelism**.
