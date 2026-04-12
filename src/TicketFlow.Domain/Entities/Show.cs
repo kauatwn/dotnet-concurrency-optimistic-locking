@@ -1,10 +1,9 @@
-﻿using TicketFlow.Domain.Common;
-using TicketFlow.Domain.Enums;
+﻿using TicketFlow.Domain.Enums;
 using TicketFlow.Domain.Exceptions;
 
 namespace TicketFlow.Domain.Entities;
 
-public sealed class Show : IAggregateRoot
+public sealed class Show
 {
     public const string TitleCannotBeEmpty = "Show title cannot be empty.";
     public const string DateIsRequired = "Show date is required.";
