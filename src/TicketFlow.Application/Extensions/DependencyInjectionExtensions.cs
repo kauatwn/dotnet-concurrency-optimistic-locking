@@ -1,7 +1,8 @@
-﻿using FluentValidation;
+﻿using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection;
-using System.Diagnostics.CodeAnalysis;
-using TicketFlow.Application.Behaviors;
+using TicketFlow.Application.UseCases.Shows.GetDetails;
+using TicketFlow.Application.UseCases.Tickets.GetAvailable;
+using TicketFlow.Application.UseCases.Tickets.Reserve;
 
 namespace TicketFlow.Application.Extensions;
 
@@ -10,20 +11,11 @@ public static class DependencyInjectionExtensions
 {
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
-        AddValidation(services);
-
-        services.AddMediatR(configuration =>
-        {
-            configuration.RegisterServicesFromAssembly(typeof(DependencyInjectionExtensions).Assembly);
-
-            configuration.AddOpenBehavior(typeof(ValidationBehavior<,>));
-        });
+        services.AddScoped<IGetAvailableTicketsUseCase, GetAvailableTicketsUseCase>();
+        services.AddScoped<IReserveTicketUseCase, ReserveTicketUseCase>();
+        
+        services.AddScoped<IGetDetailsUseCase, GetDetailsUseCase>();
 
         return services;
-    }
-
-    private static void AddValidation(IServiceCollection services)
-    {
-        services.AddValidatorsFromAssembly(typeof(DependencyInjectionExtensions).Assembly);
     }
 }

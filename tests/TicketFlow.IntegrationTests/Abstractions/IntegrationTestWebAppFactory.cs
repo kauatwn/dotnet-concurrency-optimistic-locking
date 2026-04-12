@@ -3,26 +3,25 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Testcontainers.MsSql;
+using Testcontainers.PostgreSql;
 using TicketFlow.Infrastructure.Persistence;
 
 namespace TicketFlow.IntegrationTests.Abstractions;
 
 public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
-    private const string Image = "mcr.microsoft.com/mssql/server:2022-latest";
-    private const string Password = "YourStrong@Password123";
-
-    private readonly MsSqlContainer _dbContainer = new MsSqlBuilder()
-        .WithImage(Image)
-        .WithPassword(Password)
+    private readonly PostgreSqlContainer _dbContainer = new PostgreSqlBuilder("postgres:18-alpine")
+        .WithDatabase("ticketflow")
+        .WithUsername("postgres")
+        .WithPassword("postgres")
         .Build();
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.ConfigureTestServices(services =>
         {
-            ServiceDescriptor? descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(DbContextOptions<TicketFlowDbContext>));
+            ServiceDescriptor? descriptor =
+                services.SingleOrDefault(d => d.ServiceType == typeof(DbContextOptions<TicketFlowDbContext>));
 
             if (descriptor is not null)
             {
@@ -31,13 +30,13 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
 
             services.AddDbContext<TicketFlowDbContext>(options =>
             {
-                options.UseSqlServer(_dbContainer.GetConnectionString());
+                options.UseNpgsql(_dbContainer.GetConnectionString());
                 options.EnableSensitiveDataLogging(false);
             });
         });
     }
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         await _dbContainer.StartAsync();
 
@@ -45,10 +44,5 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
         var context = scope.ServiceProvider.GetRequiredService<TicketFlowDbContext>();
 
         await context.Database.MigrateAsync();
-    }
-
-    public new async Task DisposeAsync()
-    {
-        await _dbContainer.StopAsync();
     }
 }

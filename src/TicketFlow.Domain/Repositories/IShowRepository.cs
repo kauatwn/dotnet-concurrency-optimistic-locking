@@ -5,5 +5,5 @@ namespace TicketFlow.Domain.Repositories;
 public interface IShowRepository
 {
     void Add(Show show);
-    Task<Show?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
+    Task<Show?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 }

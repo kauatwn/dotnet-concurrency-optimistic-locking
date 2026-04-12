@@ -14,7 +14,7 @@ A high-performance Ticket Reservation System built with **C# 14** and **.NET 10*
 Ensure you have the following installed to run this project efficiently:
 
 - **[.NET 10 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/10.0)** (or later)
-- **[Docker Desktop](https://www.docker.com/)** (Required to orchestrate the SQL Server database)
+- **[Docker Desktop](https://www.docker.com/)** (Required to orchestrate the PostgreSQL database)
 - **IDE:** [Visual Studio](https://visualstudio.microsoft.com), [Visual Studio Code](https://code.visualstudio.com/), or [Rider](https://www.jetbrains.com/rider/).
 
 ## How to Run
@@ -31,15 +31,15 @@ git clone https://github.com/kauatwn/dotnet-concurrency-optimistic-locking.git
 cd dotnet-concurrency-optimistic-locking
 ```
 
-### 3. Run with Docker
+### 3. Run with Docker Compose
 
-This command builds the API, starts the SQL Server, and **automatically applies migrations** on startup.
+This command builds the API, starts the PostgreSQL database, and **automatically applies migrations** on startup.
 
 ```bash
 docker compose up -d
 ```
 
-*The API documentation will be accessible at `https://localhost:8081/swagger`.*
+_The API documentation will be accessible at `https://localhost:8081/swagger`._
 
 ### 4. Execute Tests
 
@@ -57,9 +57,9 @@ The solution follows the **Clean Architecture** principles to ensure separation 
 dotnet-concurrency-optimistic-locking/
 ├── src/
 │   ├── TicketFlow.API/               # Entry point, Controllers, Global Exception Handling
-│   ├── TicketFlow.Application/       # Use Cases (MediatR), Behaviors, DTOs
+│   ├── TicketFlow.Application/       # Use Cases, DTOs
 │   ├── TicketFlow.Domain/            # Aggregate Roots, Value Objects, Pure Logic
-│   └── TicketFlow.Infrastructure/    # EF Core, Concurrency Handling, TimeProvider
+│   └── TicketFlow.Infrastructure/    # EF Core (PostgreSQL), Concurrency Handling, TimeProvider
 └── tests/
     ├── TicketFlow.UnitTests/         # Domain Logic & Time Travel Tests
     └── TicketFlow.IntegrationTests/  # Race Condition Simulations & DB Tests
@@ -81,12 +81,11 @@ The core logic resides entirely within the `Domain` layer.
 
 The project utilizes established patterns to ensure modularity and scalability.
 
-| Pattern | Usage Scenario | Implementation |
-| --- | --- | --- |
-| **Unit of Work** | Ensuring atomic transactions | `IUnitOfWork` |
-| **Optimistic Locking** | Handling concurrent writes | `RowVersion` (Timestamp token) |
-| **CQRS** | Segregating Reads/Writes | `MediatR` (Commands vs Queries) |
-| **Global Error Handling** | Standardizing API errors (409/400) | `IExceptionHandler` |
+|          Pattern          | Usage Scenario                               | Implementation                            |
+| :-----------------------: | :------------------------------------------- | :---------------------------------------- |
+|       **Use Cases**       | Encapsulating specific application workflows | `IReserveTicketUseCase`                   |
+|  **Optimistic Locking**   | Handling concurrent writes                   | `xmin` (PostgreSQL hidden transaction ID) |
+| **Global Error Handling** | Standardizing API errors (409/400)           | `IExceptionHandler`                       |
 
 ### 3. Concurrency & Locking Strategy
 
@@ -97,7 +96,7 @@ To prevent "double booking" without killing performance, we made specific engine
 > To handle high-concurrency scenarios (e.g., thousands of users trying to buy the same seat), we implemented **Optimistic Locking**:
 >
 > - **Why not Pessimistic Locking?** Keeping database rows locked (`SELECT FOR UPDATE`) while the user "thinks" or pays would degrade performance and throughput significantly.
-> - **How it works:** If two users read the same ticket version, the first one to write wins. The second one triggers a `DbUpdateConcurrencyException`, which we catch in the `UnitOfWork` and translate to a **409 Conflict** response.
+> - **How it works:** If two users read the same ticket version, the first one to write wins. The second one tries to update a stale record, which triggers a `DbUpdateConcurrencyException`. We catch this exception in the Persistence layer and translate it to a **409 Conflict** response.
 
 ![Sequence Diagram illustrating Optimistic Locking in action](./docs/optimistic-locking-sequence.png)
 _Figure 1: Sequence diagram demonstrating the race condition handling and the 409 Conflict response._
@@ -107,69 +106,23 @@ _Figure 1: Sequence diagram demonstrating the race condition handling and the 40
 The project adopts a strategy focused on **Time** and **Parallelism**.
 
 - **Unit Tests (Time Travel):** We use time injection through method parameters to simulate shows in the past or future without dirty hacks like `Thread.Sleep`.
-- **Integration Tests:** We spawn separate Service Scopes to simulate concurrent users (`Task.WhenAll`) hitting the real database to prove the locking mechanism works.
+- **Integration Tests:** We spawn separate Service Scopes to simulate concurrent users (`Task.WhenAll`) hitting the real database via **Testcontainers** (PostgreSQL) to prove the locking mechanism works.
 
 > [!NOTE]
 > **Testing Isolation Strategy**
 > Unlike standard CRUD tests, our integration tests **intentionally** share resources (the same Ticket ID) to provoke Race Conditions and validate that the system rejects the second attempt.
 
-### 5. Manual Verification (Sandbox Walkthrough)
+### 5. Known Limitations & Pragmatic Trade-offs
 
-Since this project focuses on **Concurrency** rather than CRUD, follow this specific flow to manually validate the **Optimistic Locking** mechanism via Swagger:
+This project is an engineering sandbox focused on demonstrating Concurrency Controls (Optimistic Locking). While the architecture successfully prevents "double booking" for individual seats, it introduces specific pragmatic trade-offs favoring performance over strict global locking:
 
-#### Step 1: Discover Available Tickets
+- **Global Rule Bypass (Check-Then-Act):** To maximize throughput, the transaction boundary (Aggregate Root) is restricted to the individual `Ticket`. The `MaxTicketsPerUser` rule is verified without a global lock. If a malicious user fires parallel requests for _different_ tickets simultaneously, all threads might read the same initial state (e.g., "0 tickets bought"), allowing the user to bypass the limit. _Production Mitigation:_ Implement eventual consistency checks (a Background Worker that cancels excess orders) or enforce a pessimistic lock on a dedicated user-quota table.
+- **Exception Overhead under Extreme Contention:** Optimistic locking relies on throwing and catching `DbUpdateConcurrencyException` when collisions occur. If thousands of bots attempt to buy the _exact same_ ticket at the exact same millisecond, the API will generate thousands of exceptions. Catching exceptions is a CPU-intensive operation in .NET and could spike server load. _Production Mitigation:_ For hyper-scale scenarios (e.g., major concerts), this architecture would typically be fronted by a Virtual Waiting Room or an asynchronous queue (like AWS SQS) to absorb the traffic spike and serialize processing.
 
-The application automatically seeds the database with a Show (ID: `11111111-1111-1111-1111-111111111111`) and 50 Tickets.
+### 6. CI/CD & Quality
 
-1. Call the endpoint using the **Fixed Show ID**:
-    - **GET** `/api/shows/11111111-1111-1111-1111-111111111111/tickets`
-    - *Copy the `id` of the first ticket in the list.*
-
-#### Step 2: Reserve the Ticket (Success Scenario)
-
-Send a reservation request for the copied Ticket ID.
-
-- **POST** `/api/tickets/{ticketId}/reserve`
-- **Body:**
-
-    ```json
-    {
-      "customerId": "aaaa1111-bb22-cc33-dd44-eeee55556666"
-    }
-    ```
-
-- **Result:** `204 No Content` (The ticket is now reserved).
-
-#### Step 3: Trigger Race Condition (Conflict Scenario)
-
-Immediately try to send the **exact same request** again (simulating a second user trying to buy the same seat).
-
-- **Result:** `409 Conflict`
-- **Response Body:**
-
-    ```json
-    {
-      "type": "https://tools.ietf.org/html/rfc7231#section-6.5.8",
-      "title": "Resource Conflict",
-      "status": 409,
-      "detail": "Seat 'VIP - A1' is already reserved or sold."
-    }
-    ```
-
-> This proves that the **Domain Layer** successfully intercepted the invalid state transition or the **Infrastructure Layer** caught the `DbUpdateConcurrencyException`.
-
-### 6. Known Limitations (Trade-offs)
-
-> [!WARNING]
-> **Trade-off: Max Tickets Per User**
-> To maximize performance, the `Ticket` aggregate is isolated, and the `MaxTicketsPerUser` rule is checked only within the current transaction scope. In a distributed race condition, a user might exceed their quota.
->
-> **Production Considerations:** In a full-scale production environment, this specific edge case would be mitigated by implementing **eventual consistency checks** (Background Worker) or a **dedicated counter table** with strict Database Constraints. For this sandbox, we prioritize the clarity of the core Locking mechanism.
-
-### 7. CI/CD & Quality
-
-The project includes configuration for automated quality checks:
+The project includes a **GitHub Actions** workflow that ensures quality on every push:
 
 - **Parallel Testing:** Ensures the system handles load correctly.
-- **Static Analysis:** Strict compiler warnings enabled to ensure type safety.
-- **Docker Build:** Verifies that the container image builds successfully via Compose.
+- **Static Analysis:** Integrates with **SonarCloud** for code quality gates, ensuring strict compiler warnings and type safety.
+- **Docker Build Validation:** Verifies that the container image builds successfully via Docker Compose.

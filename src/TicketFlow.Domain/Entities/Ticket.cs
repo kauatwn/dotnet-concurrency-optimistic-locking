@@ -1,11 +1,10 @@
-﻿using TicketFlow.Domain.Common;
-using TicketFlow.Domain.Enums;
+﻿using TicketFlow.Domain.Enums;
 using TicketFlow.Domain.Exceptions;
 using TicketFlow.Domain.ValueObjects;
 
 namespace TicketFlow.Domain.Entities;
 
-public sealed class Ticket : IAggregateRoot
+public sealed class Ticket
 {
     public const string CustomerIdRequired = "A valid '{0}' is required for reservation.";
     public const string TicketMustBeReserved = "Ticket must be reserved before confirmation.";
@@ -23,7 +22,7 @@ public sealed class Ticket : IAggregateRoot
     public DateTime? ReservedAt { get; private set; }
     public DateTime CreatedAt { get; private set; }
 
-    public byte[] RowVersion { get; private set; }
+    public uint Version { get; private set; }
 
     private Ticket() { }
 

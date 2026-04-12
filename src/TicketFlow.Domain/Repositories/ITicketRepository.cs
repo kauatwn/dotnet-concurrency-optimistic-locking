@@ -4,6 +4,7 @@ namespace TicketFlow.Domain.Repositories;
 
 public interface ITicketRepository
 {
-    Task<Ticket?> GetByIdWithShowAsync(Guid id, CancellationToken cancellationToken);
-    void Update(Ticket ticket);
+    Task<Ticket?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
+    Task<List<Ticket>> GetAvailableAsync(Guid showId, CancellationToken cancellationToken = default);
+    Task UpdateAsync(Ticket ticket, CancellationToken cancellationToken);
 }

@@ -5,63 +5,41 @@ using TicketFlow.Domain.ValueObjects;
 
 namespace TicketFlow.Infrastructure.Persistence.Configurations;
 
-public class TicketConfiguration : IEntityTypeConfiguration<Ticket>
+public sealed class TicketConfiguration : IEntityTypeConfiguration<Ticket>
 {
     public void Configure(EntityTypeBuilder<Ticket> builder)
     {
         builder.HasKey(t => t.Id);
 
+        builder.Property(t => t.Id)
+            .ValueGeneratedNever();
+
         builder.Property(t => t.Price)
             .HasPrecision(18, 2)
             .IsRequired();
 
-        builder.Property(t => t.RowVersion)
-            .IsRowVersion();
-
         builder.Property(t => t.CreatedAt)
             .IsRequired();
-        
+
         builder.Property(t => t.Status)
             .IsRequired();
 
-        builder.Property<string>("SeatSector")
-            .HasColumnName("SeatSector")
-            .HasMaxLength(Seat.MaxSectorLength)
-            .IsRequired();
+        builder.Property(t => t.Version)
+            .IsRowVersion();
 
-        builder.Property<string>("SeatRow")
-            .HasColumnName("SeatRow")
-            .HasMaxLength(Seat.MaxRowLength)
-            .IsRequired();
-
-        builder.Property<string>("SeatNumber")
-            .HasColumnName("SeatNumber")
-            .HasMaxLength(Seat.MaxNumberLength)
-            .IsRequired();
-
-        builder.OwnsOne(t => t.Seat, seat =>
+        builder.OwnsOne(t => t.Seat, seatBuilder =>
         {
-            seat.Property(s => s.Sector)
-                .HasColumnName("SeatSector")
+            seatBuilder.Property(s => s.Sector)
                 .HasMaxLength(Seat.MaxSectorLength)
                 .IsRequired();
 
-            seat.Property(s => s.Row)
-                .HasColumnName("SeatRow")
+            seatBuilder.Property(s => s.Row)
                 .HasMaxLength(Seat.MaxRowLength)
                 .IsRequired();
 
-            seat.Property(s => s.Number)
-                .HasColumnName("SeatNumber")
-                .HasMaxLength(Seat.MaxNumberLength)
+            seatBuilder.Property(s => s.Number)
                 .IsRequired();
         });
-
-        builder.Navigation(t => t.Seat)
-            .IsRequired();
-
-        builder.HasIndex("ShowId", "SeatSector", "SeatRow", "SeatNumber")
-            .IsUnique();
 
         builder.HasOne<Show>()
             .WithMany()
