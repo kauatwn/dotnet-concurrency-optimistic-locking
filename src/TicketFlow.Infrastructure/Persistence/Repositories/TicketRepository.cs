@@ -8,12 +8,12 @@ namespace TicketFlow.Infrastructure.Persistence.Repositories;
 
 public class TicketRepository(TicketFlowDbContext context) : ITicketRepository
 {
-    public async Task<Ticket?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<Ticket?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
     {
         return await context.Tickets.FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
     }
 
-    public async Task<List<Ticket>> GetAvailableAsync(Guid showId, CancellationToken cancellationToken = default)
+    public async Task<List<Ticket>> GetAvailableAsync(Guid showId, CancellationToken cancellationToken)
     {
         return await context.Tickets
             .AsNoTracking()
@@ -21,7 +21,7 @@ public class TicketRepository(TicketFlowDbContext context) : ITicketRepository
             .ToListAsync(cancellationToken);
     }
 
-    public async Task UpdateAsync(Ticket ticket, CancellationToken cancellationToken = default)
+    public async Task UpdateAsync(Ticket ticket, CancellationToken cancellationToken)
     {
         context.Tickets.Update(ticket);
         try

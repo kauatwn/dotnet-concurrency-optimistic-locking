@@ -14,13 +14,12 @@ public class ShowRepository(TicketFlowDbContext context) : IShowRepository, ISho
         context.Shows.Add(show);
     }
 
-    public async Task<Show?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<Show?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
     {
         return await context.Shows.FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
     }
 
-    public async Task<ShowDetailsResponse?> GetOptimizedDetailsAsync(Guid showId,
-        CancellationToken cancellationToken = default)
+    public async Task<ShowDetailsResponse?> GetOptimizedDetailsAsync(Guid showId, CancellationToken cancellationToken)
     {
         return await context.Shows.AsNoTracking()
             .Where(s => s.Id == showId)
