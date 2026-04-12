@@ -1,9 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
 using TicketFlow.Application.DTOs.Responses;
 using TicketFlow.Domain.Entities;
 using TicketFlow.Domain.Repositories;
 
 namespace TicketFlow.Application.UseCases.Tickets.GetAvailable;
 
+[ExcludeFromCodeCoverage(Justification = "Read-only orchestration intentionally excluded. Focus is strictly on Write concurrency and Optimistic Locking.")]
 public sealed class GetAvailableTicketsUseCase(ITicketRepository ticketRepository) : IGetAvailableTicketsUseCase
 {
     public async Task<List<TicketResponse>> ExecuteAsync(
