@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using TicketFlow.Application.UseCases.Shows.GetDetails;
+using TicketFlow.Application.UseCases.Shows;
 using TicketFlow.Domain.Repositories;
 using TicketFlow.Infrastructure.Persistence;
 using TicketFlow.Infrastructure.Persistence.Repositories;

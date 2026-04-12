@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using TicketFlow.Application.DTOs.Responses;
-using TicketFlow.Application.UseCases.Shows.GetDetails;
+using TicketFlow.Application.UseCases.Shows;
 using TicketFlow.Domain.Entities;
 using TicketFlow.Domain.Enums;
 using TicketFlow.Domain.Repositories;
