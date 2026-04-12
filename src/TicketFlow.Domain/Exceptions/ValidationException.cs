@@ -1,5 +1,8 @@
-﻿namespace TicketFlow.Domain.Exceptions;
+﻿using System.Diagnostics.CodeAnalysis;
 
+namespace TicketFlow.Domain.Exceptions;
+
+[ExcludeFromCodeCoverage]
 public sealed class ValidationException : Exception
 {
     public const string DefaultErrorMessage = "Validation failed";
