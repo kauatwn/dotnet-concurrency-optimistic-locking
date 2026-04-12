@@ -1,13 +1,12 @@
-﻿using MediatR;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using TicketFlow.API.Contracts.Tickets;
-using TicketFlow.Application.UseCases.Commands.Tickets.Reserve;
+using TicketFlow.Application.UseCases.Tickets.Reserve;
 
 namespace TicketFlow.API.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class TicketsController(IMediator mediator) : ControllerBase
+public class TicketsController(IReserveTicketUseCase reserveTicketUseCase) : ControllerBase
 {
     [HttpPost("{id:guid}/reserve")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -15,8 +14,7 @@ public class TicketsController(IMediator mediator) : ControllerBase
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Reserve(Guid id, ReserveTicketRequest request)
     {
-        ReserveTicketCommand command = new(id, request.CustomerId);
-        await mediator.Send(command);
+        await reserveTicketUseCase.ExecuteAsync(id, request.CustomerId);
 
         return NoContent();
     }
