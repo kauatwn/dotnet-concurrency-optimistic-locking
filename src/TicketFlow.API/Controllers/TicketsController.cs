@@ -1,20 +1,19 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using TicketFlow.API.Contracts.Tickets;
 using TicketFlow.Application.UseCases.Tickets.Reserve;
 
 namespace TicketFlow.API.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class TicketsController(IReserveTicketUseCase reserveTicketUseCase) : ControllerBase
+public sealed class TicketsController : ControllerBase
 {
     [HttpPost("{id:guid}/reserve")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> Reserve(Guid id, ReserveTicketRequest request)
+    public async Task<IActionResult> Reserve(IReserveTicketUseCase useCase, Guid id, Guid customerId)
     {
-        await reserveTicketUseCase.ExecuteAsync(id, request.CustomerId);
+        await useCase.ExecuteAsync(id, customerId);
 
         return NoContent();
     }
