@@ -4,5 +4,5 @@ namespace TicketFlow.Application.UseCases.Shows;
 
 public interface IShowReadRepository
 {
-    Task<ShowDetailsResponse?> GetOptimizedDetailsAsync(Guid showId, CancellationToken cancellationToken);
+    Task<ShowDetailsResponse?> GetOptimizedDetailsAsync(Guid showId, CancellationToken cancellationToken = default);
 }
