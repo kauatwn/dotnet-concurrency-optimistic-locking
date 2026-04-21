@@ -24,7 +24,9 @@ public sealed class Ticket
 
     public uint Version { get; private set; }
 
-    private Ticket() { }
+    private Ticket()
+    {
+    }
 
     public Ticket(Guid showId, Seat seat, decimal price, DateTime createdDate)
     {
@@ -45,9 +47,9 @@ public sealed class Ticket
             throw new DomainException(string.Format(CustomerIdRequired, nameof(CustomerId)));
         }
 
-        if (Status == TicketStatus.Reserved && CustomerId == customerId)
+        if (Status == TicketStatus.Reserved)
         {
-            return;
+            if (CustomerId == customerId) return;
         }
 
         if (Status != TicketStatus.Available)
