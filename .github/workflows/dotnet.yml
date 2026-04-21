@@ -76,7 +76,7 @@ jobs:
           /d:sonar.host.url="https://sonarcloud.io" \
           /d:sonar.projectBaseDir="${{ github.workspace }}" \
           /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml" \
-          /d:sonar.coverage.exclusions="**/TicketFlow.API/**,**/Configurations/**,**/Migrations/**,**/TicketFlow.Infrastructure/Persistence/Repositories/**"
+          /d:sonar.coverage.exclusions="**/TicketFlow.API/**,**/Configurations/**,**/Migrations/**,**/TicketFlow.Infrastructure/Persistence/Repositories/**,**/DTOs/**"
 
       - name: Build
         run: dotnet build TicketFlow.slnx --no-restore --configuration Release
