@@ -50,6 +50,8 @@ public sealed class Ticket
         if (Status == TicketStatus.Reserved)
         {
             if (CustomerId == customerId) return;
+
+            throw new DomainConflictException(string.Format(SeatNotAvailableMessage, Seat));
         }
 
         if (Status != TicketStatus.Available)
