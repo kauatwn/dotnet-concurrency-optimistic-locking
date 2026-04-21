@@ -30,6 +30,7 @@ public class TicketTests
         Assert.Equal(_now, ticket.CreatedAt);
         Assert.Null(ticket.CustomerId);
         Assert.Null(ticket.ReservedAt);
+        Assert.Equal(0u, ticket.Version);
     }
 
     [Fact(DisplayName = "Constructor should throw exception when ShowId is empty")]
@@ -77,6 +78,7 @@ public class TicketTests
         // Assert
         var exception = Assert.Throws<DomainException>(Act);
         Assert.Equal(Ticket.PriceMustBePositive, exception.Message);
+        
     }
 
     [Fact(DisplayName = "Reserve should update status and customer when ticket is available")]
