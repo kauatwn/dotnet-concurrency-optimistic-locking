@@ -38,7 +38,7 @@ public class TicketTests
     {
         // Arrange
         Seat seat = new(Sector: "A", Row: "1", Number: "10");
-        decimal price = 150.00m;
+        const decimal price = 150.00m;
 
         // Act
         void Act() => _ = new Ticket(Guid.Empty, seat, price, _now);
@@ -53,7 +53,7 @@ public class TicketTests
     {
         // Arrange
         Guid showId = Guid.NewGuid();
-        decimal price = 150.00m;
+        const decimal price = 150.00m;
 
         // Act
         void Act() => _ = new Ticket(showId, null!, price, _now);
